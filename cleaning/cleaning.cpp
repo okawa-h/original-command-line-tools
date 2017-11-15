@@ -3,13 +3,14 @@
 //  deleteTrash
 //
 //  Created by okawa on 2017/11/09.
-//  Copyright (c) 2017年 okawa-h. All rights reserved.
+//  Copyright (c) 2017 okawa-h. All rights reserved.
 //
 
 #include <iostream>
 #include <sys/stat.h>
 #include <dirent.h>
 #include <vector>
+#include <unistd.h>
 
 std::vector<std::string> delete_files;
 
@@ -20,6 +21,14 @@ bool isDirectory( const char* filepath ) {
     if (st.st_mode & S_IFDIR) return true;
     return false;
     
+}
+
+std::string getCurrentDirectory() {
+
+	char dir[255];
+	getcwd(dir,255);
+	return dir;
+
 }
 
 void read(std::string dir) {
@@ -97,11 +106,7 @@ void prompt() {
     
 }
 
-int main() {
-    
-    std::string dir;
-    std::cout << "Enter 🔍 path" << std::endl;
-    std::cin >> dir;
+void run(std::string dir) {
     
     if (!isDirectory(dir.c_str())) {
         printf("\n😂 No directory 😂\n");
@@ -115,6 +120,41 @@ int main() {
     } else {
         printf("\n🎉 clean 🎉\n");
     }
+
+}
+
+int main(int argc, char* argv[]) {
+
+	int result;
+	while ((result = getopt(argc,argv,"ce:")) != -1) {
+		switch(result){
+
+			case 'c':
+				run(getCurrentDirectory());
+				exit(1);
+				break;
+
+			case 'e':
+				fprintf(stdout,"%c %s\n",result,optarg);
+				break;
+
+			//need value
+			case ':':
+				break;
+
+			case '?':
+				fprintf(stdout,"unknown\n");
+				break;
+			default:
+				std::cout << "Enter path" << std::endl;
+				break;
+		}
+	}
+
+    std::string dir;
+    std::cout << "Enter 🔍 path" << std::endl;
+    std::cin >> dir;
+    run(dir);
     
     return 0;
     
