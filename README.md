@@ -19,3 +19,9 @@ Usage: example [options]
 $createHtaccess
 ```
 Create htaccess.txt and htpasswd.txt in current directory.
+
+#### Work Initialize
+```
+$workInitialize
+```
+Initialize project.

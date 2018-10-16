@@ -1,8 +1,8 @@
 //
-//  main.cpp
-//  deleteTrash
+//  cleaning.cpp
+//  cleaning
 //
-//  Created by okawa on 2017/11/09.
+//  Created by okawa on 2018/02/06.
 //  Copyright (c) 2017 okawa-h. All rights reserved.
 //
 
@@ -11,15 +11,14 @@
 #include <dirent.h>
 #include <vector>
 #include <unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
 
-std::vector<std::string> delete_files;
-
-bool isDirectory( const char* filepath ) {
+bool isDirectory(const char* filepath) {
     
     struct stat st;
     stat(filepath,&st);
-    if (st.st_mode & S_IFDIR) return true;
-    return false;
+    return st.st_mode & S_IFDIR;
     
 }
 
@@ -31,10 +30,10 @@ std::string getCurrentDirectory() {
 
 }
 
-void read(std::string dir) {
+std::vector<std::string> readFiles(std::string dir) {
     
-    const char* path = dir.c_str();
-    DIR *dp = opendir(path);
+    std::vector<std::string> files;
+    DIR *dp = opendir(dir.c_str());
     dirent* entry;
     
     if (dp != NULL) {
@@ -50,12 +49,18 @@ void read(std::string dir) {
                 
                 if (isDirectory(filepath.c_str())) {
                     
-                    read(filepath);
+                    struct stat st;
+                    stat(filepath.c_str(),&st);
+                    printf("%s\n",filepath.c_str() );
+                    printf("最終修正時刻 : %s",ctime(&st.st_mtime));
+                    printf("最終状態変更時刻 : %s",ctime(&st.st_ctime));
+
+                    readFiles(filepath);
                     
                 } else {
                     
                     if (!strcmp(filename, ".DS_Store")) {
-                        delete_files.push_back(filepath);
+                        files.push_back(filepath);
                     }
                     
                 }
@@ -66,42 +71,44 @@ void read(std::string dir) {
     }
     
     closedir(dp);
+    return files;
     
 }
 
-void deleteFiles() {
+void deleteFiles(std::vector<std::string> files) {
     
-    for (int i = 0; i != delete_files.size(); ++i) {
-        std::string target = delete_files[i];
-        remove(target.c_str());
-        printf("%s\n",target.c_str());
+    for (int i = 0; i != files.size(); ++i) {
+        std::string file = files[i];
+        remove(file.c_str());
+        printf("%s\n",file.c_str());
     }
     printf("\n👆 kill 👆\n");
     
 }
 
-void showFiles() {
+void showFiles(std::vector<std::string> files) {
     
     printf("\n");
-    for (int i = 0; i != delete_files.size(); ++i) {
-        std::string target = delete_files[i];
-        printf("%s\n",target.c_str());
+    for (int i = 0; i != files.size(); ++i) {
+        std::string file = files[i];
+        printf("%s\n",file.c_str());
+
     }
     
 }
 
-void prompt() {
+void prompt(std::vector<std::string> files) {
     
-    std::string choice;
+    std::string action;
     std::cout << "\n😎 Can i delete 💩 files? [y/n]\n";
-    std::cin >> choice;
-    if (choice == "y") {
+    std::cin >> action;
+    if (action == "y") {
         std::cout << "\n🏃 delete 💩 files\n\n";
-        deleteFiles();
-    } else if (choice == "n"){
+        deleteFiles(files);
+    } else if (action == "n"){
         std::cout << "\n👋\n";
     } else {
-        prompt();
+        prompt(files);
     }
     
 }
@@ -113,10 +120,10 @@ void run(std::string dir) {
         exit(1);
     }
     
-    read(dir);
-    if (0 < delete_files.size()) {
-        showFiles();
-        prompt();
+    std::vector<std::string> files = readFiles(dir);
+    if (0 < files.size()) {
+        showFiles(files);
+        prompt(files);
     } else {
         printf("\n🎉 clean 🎉\n");
     }
@@ -130,6 +137,7 @@ int main(int argc, char* argv[]) {
 		switch(result){
 
 			case 'c':
+
 				run(getCurrentDirectory());
 				exit(1);
 				break;
